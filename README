@@ -1,0 +1,9 @@
+Das hier ist ein sehr sehr simples und ebenso dreckig zusammengehacktes Wordpress-Plugin um kleinere Umfragen zu erstellen
+
+Es gibt bestimmt hunderte bessere Plugins da draussen in diesem Internet aber ich habe keins gefunden welches erlaubt einen eigenen Wert zum verifizieren eines Namens in den Export zu übergeben..
+
+Falls jemand das Plugin verwenden will kann er das gerne tun, eine erwähnung meines Namens erwünsche ich nur dann wenn es auch vernünftig funktioniert ;)
+
+Eingesetzt wird das Plugin auf der Homepage des Konrad Adenauer Gymnasium Bonn zur Wahl von Förderkursen, hierbei musste eine Validierung her, die Schülerausweisnummer.
+
+joah.. bitte sehr.
