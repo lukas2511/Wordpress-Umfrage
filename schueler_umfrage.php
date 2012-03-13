@@ -35,7 +35,7 @@ function schueler_umfrage_init(){
 	$tables=array(
 		"wp_schueler_umfragen" => "`id` INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,`anonym` INT( 1 ) NOT NULL DEFAULT  '0',`frage` VARCHAR( 100 ) NOT NULL , `validierung` VARCHAR(100) NOT NULL",
 		"wp_schueler_umfragen_moeglichkeiten" => "`id` INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,`umfrage` INT( 10 ) NOT NULL ,`antwort` VARCHAR( 100 ) NOT NULL",
-		"wp_schueler_umfragen_antworten" => "`id` INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,`umfrage` INT( 10 ) NOT NULL ,`antwort` VARCHAR( 100 ) NOT NULL ,`name` VARCHAR( 100 ) NOT NULL ,`validierung` VARCHAR( 100 ) NOT NULL, date INT (12) NOT NULL",
+		"wp_schueler_umfragen_antworten" => "`id` INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,`umfrage` INT( 10 ) NOT NULL ,`antwort` VARCHAR( 100 ) NOT NULL ,`name` VARCHAR( 100 ) NOT NULL ,`vorname` VARCHAR( 100 ) NOT NULL ,`klasse` VARCHAR( 10 ) NOT NULL ,`validierung` VARCHAR( 100 ) NOT NULL, date INT (12) NOT NULL",
 	);
 	global $wpdb;
 	if(!get_option("schueler_umfragen_db_erstellt")){
@@ -72,22 +72,22 @@ function schueler_umfrage_content($input=""){
 									$wpdb->query($wpdb->prepare("INSERT INTO `wp_schueler_umfragen_antworten` (`umfrage`,`antwort`,`date`) VALUES (%d,%s,UNIX_TIMESTAMP())",$umfrage->id,$antwort[0]->antwort));
 									$output.="<p>Vielen Dank, deine Auswahl wurde gespeichert.</p>";
 								}else{
-									if(!isset($_POST['umfrage_name']) || empty($_POST['umfrage_name']) || ($umfrage->validierung!=keine && (!isset($_POST['umfrage_validierung']) || empty($_POST['umfrage_validierung'])))){
+									if(!isset($_POST['umfrage_name']) || !isset($_POST['umfrage_vorname']) || !isset($_POST['umfrage_klasse']) || empty($_POST['umfrage_name']) || ($umfrage->validierung!=keine && (!isset($_POST['umfrage_validierung']) || empty($_POST['umfrage_validierung'])))){
 										$output.="<p style='font-weight:bold'>Bitte versuche es <a href='?p=".$postid."'>noch einmal</a>, und geb dieses mal alle ben&ouml;tigten Daten ein ;)<p>";
 									}else{
 										if($umfrage->validierung=="keine"){
-											$alt=$wpdb->get_results($wpdb->prepare("SELECT `id` FROM `wp_schueler_umfragen_antworten` WHERE `umfrage` = '".$umfrage->id."' && `name` = %s",$_POST['umfrage_name']));
+											$alt=$wpdb->get_results($wpdb->prepare("SELECT `id` FROM `wp_schueler_umfragen_antworten` WHERE `umfrage` = '".$umfrage->id."' && `name` = %s && `vorname` = %s && klasse = %s",$_POST['umfrage_name'],$_POST['umfrage_vorname'],$_POST['umfrage_klasse']));
 											if(count($alt)){
 												$wpdb->query($wpdb->prepare("UPDATE `wp_schueler_umfragen_antworten` SET `antwort` = %s, `date` = UNIX_TIMESTAMP() WHERE `id` = ".$alt[0]->id,$antwort[0]->antwort));
 											}else{
-												$wpdb->query($wpdb->prepare("INSERT INTO `wp_schueler_umfragen_antworten` (`umfrage`,`antwort`,`name`,`date`) VALUES (%d,%s,%s,UNIX_TIMESTAMP())",$umfrage->id,$antwort[0]->antwort,$_POST['umfrage_name']));
+												$wpdb->query($wpdb->prepare("INSERT INTO `wp_schueler_umfragen_antworten` (`umfrage`,`antwort`,`name`,`vorname`,`klasse`,`date`) VALUES (%d,%s,%s,%s,%s,UNIX_TIMESTAMP())",$umfrage->id,$antwort[0]->antwort,$_POST['umfrage_name'],$_POST['umfrage_vorname'],$_POST['umfrage_klasse']));
 											}
 										}else{
-											$alt=$wpdb->get_results($wpdb->prepare("SELECT `id` FROM `wp_schueler_umfragen_antworten` WHERE `umfrage` = '".$umfrage->id."' && `name` = %s && `validierung` = %s",$_POST['umfrage_name'],$_POST['umfrage_validierung']));
+											$alt=$wpdb->get_results($wpdb->prepare("SELECT `id` FROM `wp_schueler_umfragen_antworten` WHERE `umfrage` = '".$umfrage->id."' && `name` = %s && `vorname` = %s && `klasse` = %s && `validierung` = %s",$_POST['umfrage_name'],$_POST['umfrage_vorname'],$_POST['umfrage_klasse'],$_POST['umfrage_validierung']));
 											if(count($alt)){
 												$wpdb->query($wpdb->prepare("UPDATE `wp_schueler_umfragen_antworten` SET `antwort` = %s, `date` = UNIX_TIMESTAMP() WHERE `id` = ".$alt[0]->id,$antwort[0]->antwort));
 											}else{
-												$wpdb->query($wpdb->prepare("INSERT INTO `wp_schueler_umfragen_antworten` (`umfrage`,`antwort`,`name`,`validierung`,`date`) VALUES (%d,%s,%s,%s,UNIX_TIMESTAMP())",$umfrage->id,$antwort[0]->antwort,$_POST['umfrage_name'],$_POST['umfrage_validierung']));
+												$wpdb->query($wpdb->prepare("INSERT INTO `wp_schueler_umfragen_antworten` (`umfrage`,`antwort`,`name`,`vorname`,`klasse`,`validierung`,`date`) VALUES (%d,%s,%s,%s,%s,%s,UNIX_TIMESTAMP())",$umfrage->id,$antwort[0]->antwort,$_POST['umfrage_name'],$_POST['umfrage_vorname'],$_POST['umfrage_klasse'],$_POST['umfrage_validierung']));
 											}
 										}
 										$output.="<p>Vielen Dank, deine Auswahl wurde gespeichert.</p>";
@@ -102,7 +102,9 @@ function schueler_umfrage_content($input=""){
 					}else{
 						$output.='<p><form action="" method="post">';
 						$output.='<span style="font-weight:bold;">'.$umfrage->frage.'</span><br />';
-						if(!$umfrage->anonym) $output.='Name: <input type="text" name="umfrage_name" value="" autocomplete="off" /><br />';
+						if(!$umfrage->anonym) $output.='Name: <input type="text" name="umfrage_name" value="" /><br />';
+						if(!$umfrage->anonym) $output.='Vorname: <input type="text" name="umfrage_vorname" value="" /><br />';
+						if(!$umfrage->anonym) $output.='Klasse: <input type="text" name="umfrage_klasse" value="" /><br />';
 						$moeglichkeiten=$wpdb->get_results("SELECT * FROM `wp_schueler_umfragen_moeglichkeiten` WHERE `umfrage` = ".$id);
 						foreach($moeglichkeiten as $moeglichkeit){
 							$output.='<input type="radio" name="umfrage_antwort" value="'.$moeglichkeit->id.'" /> '.$moeglichkeit->antwort."<br />";
@@ -152,12 +154,16 @@ function schueler_umfragen_admin(){
 			$csv="";
 			//$csv='"ID";';
 			if(!$umfrage->anonym) $csv.='"NAME";';
+			if(!$umfrage->anonym) $csv.='"VORNAME";';
+			if(!$umfrage->anonym) $csv.='"KLASSE";';
 			$csv.='"'.$umfrage->frage.'";"DATUM / UHRZEIT"';
 			if($umfrage->validierung!="keine") $csv.=';"'.$umfrage->validierung.'"';
 			$csv.="\r\n";
 			foreach($antworten as $antwort){
 				//$csv.='"'.$antwort->id.'";';
 				if(!$umfrage->anonym) $csv.='"'.$antwort->name.'";';
+				if(!$umfrage->anonym) $csv.='"'.$antwort->vorname.'";';
+				if(!$umfrage->anonym) $csv.='"'.$antwort->klasse.'";';
 				$csv.='"'.$antwort->antwort.'";';
 				$csv.='"'.date("d.m.Y / H:i",$antwort->date).'"';
 				if($umfrage->validierung!="keine") $csv.=';"'.$antwort->validierung.'"';
